@@ -1,0 +1,35 @@
+{
+  "name": "ui-api-automation-testing",
+  "version": "1.0.0",
+  "description": "UI + API test automation framework — Playwright + TypeScript, page objects, API service layer, multi-environment data, Allure reporting and CI on GitHub Actions",
+  "author": "Thuong Nguyen",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --project=\"UI - Auth\" --project=\"UI - Inventory\" --project=\"UI - Cart\" --project=\"UI - Checkout\"",
+    "test:api": "playwright test --project=\"API - Auth\" --project=\"API - Products\" --project=\"API - Carts\"",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:headed": "env=local_stag_chrome_false playwright test",
+    "env:dev": "node config/set-env-ci.js dev",
+    "env:stag": "node config/set-env-ci.js stag",
+    "env:prod": "node config/set-env-ci.js prod",
+    "lint": "tsc --noEmit",
+    "report:allure": "allure open reports/allure-report",
+    "report:html": "playwright show-report reports/html-report",
+    "report:history": "node src/core/reporting/google/report-history.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@types/node": "^22.10.0",
+    "allure-commandline": "^2.32.0",
+    "allure-playwright": "^3.0.0",
+    "dotenv": "^16.4.5",
+    "execa": "^9.5.1",
+    "googleapis": "^144.0.0",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

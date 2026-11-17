@@ -1,0 +1,21 @@
+# dependencies
+node_modules/
+
+# reports & artifacts (generated on every run)
+reports/
+test-results/
+playwright-report/
+allure-results/
+allure-report/
+
+# local env / secrets — never commit
+.env
+.env.ci
+.env.local
+*service-account*.json
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json

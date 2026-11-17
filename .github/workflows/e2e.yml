@@ -1,0 +1,114 @@
+name: UI + API Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 1 * * *' # every day 08:00 (UTC+7)
+  workflow_dispatch:
+    inputs:
+      env:
+        description: Environment
+        type: choice
+        options: [stag, dev, prod]
+        default: stag
+      grep:
+        description: 'Only tests matching this tag (e.g. @smoke) — empty = all'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REPORT_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+
+jobs:
+  test:
+    name: Run tests (${{ inputs.env || 'stag' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Type check
+        run: npm run lint
+
+      - name: Select environment (writes .env.ci → CI runner, headless)
+        run: npm run env:${{ inputs.env || 'stag' }}
+
+      - name: Run tests
+        id: tests
+        continue-on-error: true # keep going so the report is always published; the job fails at the end
+        run: npx playwright test ${{ inputs.grep && format('--grep "{0}"', inputs.grep) || '' }}
+
+      # Allure Trend: restore the history of the report currently on GitHub Pages
+      - name: Restore Allure history
+        run: |
+          mkdir -p reports/allure-results/history
+          for f in history.json history-trend.json duration-trend.json categories-trend.json retry-trend.json; do
+            curl -sfL "${REPORT_URL}history/$f" -o "reports/allure-results/history/$f" || true
+          done
+
+      - name: Generate Allure report
+        run: npx allure generate reports/allure-results -o reports/allure-report --clean
+
+      - name: Upload Playwright artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.run_number }}
+          path: |
+            reports/html-report
+            reports/json
+            reports/xml
+          retention-days: 14
+
+      - name: Upload report for GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: reports/allure-report
+
+      - name: Report history → Google Sheet
+        if: github.ref == 'refs/heads/main'
+        env:
+          GG_REPORT_SPREADSHEET_ID: ${{ secrets.GG_REPORT_SPREADSHEET_ID }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+        run: npm run report:history -- "$REPORT_URL"
+
+      - name: Fail the job when tests failed
+        if: steps.tests.outcome == 'failure'
+        run: |
+          echo "::error::Some tests failed — see the Allure report: $REPORT_URL"
+          exit 1
+
+  deploy-report:
+    name: Publish Allure report
+    needs: test
+    if: always() && github.ref == 'refs/heads/main' && needs.test.result != 'cancelled'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

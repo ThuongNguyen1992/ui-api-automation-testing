@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM"],
+    "strict": true,
+    "esModuleInterop": true,
+    "allowJs": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@core/*": ["./src/core/*"],
+      "@api/*": ["./src/api/*"],
+      "@page-objects/*": ["./src/page-objects/*"],
+      "@data/*": ["./src/data/*"],
+      "@tests/*": ["./src/tests/*"],
+      "@config/*": ["./config/*"]
+    }
+  },
+  "include": ["src/**/*", "config/**/*", "playwright.config.ts"]
+}

@@ -1,6 +1,7 @@
 # UI + API Automation Testing Framework
 
-[![UI + API Tests](https://github.com/ThuongNguyen1992/ui-api-automation-testing/actions/workflows/e2e.yml/badge.svg)](https://github.com/ThuongNguyen1992/ui-api-automation-testing/actions/workflows/e2e.yml)
+[![UI + API Tests](https://github.com/ThuongNguyen1992/ui-api-automation-testing/actions/workflows/github-ci.yml/badge.svg)](https://github.com/ThuongNguyen1992/ui-api-automation-testing/actions/workflows/github-ci.yml)
+[![Performance (k6)](https://github.com/ThuongNguyen1992/ui-api-automation-testing/actions/workflows/performance.yml/badge.svg)](https://github.com/ThuongNguyen1992/ui-api-automation-testing/actions/workflows/performance.yml)
 [![Allure Report](https://img.shields.io/badge/Allure-live%20report-orange)](https://thuongnguyen1992.github.io/ui-api-automation-testing/)
 ![Playwright](https://img.shields.io/badge/Playwright-1.59-2EAD33?logo=playwright)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
@@ -13,7 +14,9 @@ It runs against two public demo systems — [Swag Labs](https://www.saucedemo.co
 - **Assertions that really fail** — every check helper throws a readable error; every Expected Result maps to an assertion (UI · Data · Side effect · Negative).
 - **Traceability** — each test carries a **Script ID** tag shared by the test case list, the spec and the report history.
 - **Multi-environment** — one switch (`dev | stag | prod`) selects URLs and test data; CI and local runs use the same mechanism.
-- **Reporting** — Allure (with trend history) published on GitHub Pages, Playwright HTML / JSON / JUnit, run history in Google Sheets.
+- **Reporting** — Allure (with trend history) published on GitHub Pages, a results table on every CI run, a Google Chat card per run, Playwright HTML / JSON / JUnit, run history in Google Sheets.
+- **Performance** — k6 load scenarios with pass / fail thresholds, in their own CI workflow.
+- **AI-assisted QA** — Claude Code skills that turn test cases into automation, write API tests and analyze failures, following the same conventions.
 - **CI** — GitHub Actions on every push / PR and daily schedule.
 
 📊 **Live report:** https://thuongnguyen1992.github.io/ui-api-automation-testing/ · 🗂 **Report history:** [Google Sheet](https://docs.google.com/spreadsheets/d/1rW8dShKksqNqkV5hkODPHexFWYgZ0Xaopb4f32fviTM/edit?gid=732867072#gid=732867072) · 📋 **Test cases:** [docs/test-cases.md](docs/test-cases.md) (37 cases: 24 UI, 13 API)
@@ -33,6 +36,8 @@ It runs against two public demo systems — [Swag Labs](https://www.saucedemo.co
 9. [Reports](#9-reports)
 10. [Report History (Google Sheets)](#10-report-history-google-sheets)
 11. [CI/CD Pipeline](#11-cicd-pipeline)
+12. [Performance Testing (k6)](#12-performance-testing-k6)
+13. [AI-assisted QA (Claude Code skills)](#13-ai-assisted-qa-claude-code-skills)
 
 -------------------------------------
 
@@ -44,8 +49,11 @@ It runs against two public demo systems — [Swag Labs](https://www.saucedemo.co
 | Language | TypeScript (strict), path aliases |
 | Reporting | Allure (trend history), Playwright HTML, JSON, JUnit |
 | Report history | Google Sheets API |
+| Notification | Google Chat webhook (card with the report screenshot) |
+| Performance | k6 |
+| AI assistant | Claude Code — project skills in `.claude/skills` |
 | CI | GitHub Actions → Allure on GitHub Pages |
-| Requirements | Node.js ≥ 20, Java 11+ (only to build the Allure report locally) |
+| Requirements | Node.js ≥ 20, Java 11+ (only to build the Allure report locally), k6 (only for performance tests) |
 
 -------------------------------------
 
@@ -83,7 +91,7 @@ src/
 │   │   └── auth/get-token.ts          # API token, logged in once per worker
 │   ├── fixtures/test.fixture.ts       # test + expect + appPage + apiManager
 │   ├── setup/                # global setup, login-once setup project, end reporter
-│   ├── reporting/            # run summary → report history (Google Sheets)
+│   ├── reporting/            # run summary → job summary · Google Chat card · report history · report screenshot
 │   ├── logging/ utils/       # logger, dynamic env, file helpers
 ├── page-objects/
 │   ├── app-pages.ts          # registry → appPage.<Name> in specs
@@ -98,8 +106,15 @@ src/
 └── tests/
     ├── ui/<domain>/*.spec.ts # auth · inventory · cart · checkout — one Playwright project per domain
     └── api/<domain>/*.spec.ts
+perf/
+├── lib/                      # k6 profiles + thresholds, end-of-test summary (JSON + Markdown)
+└── scenarios/*.js            # products-api · auth-flow
+.claude/skills/               # Claude Code skills: ui-test-from-cases · api-testing · qa-failure-analyzer
+CLAUDE.md                     # project rules for Claude Code
 docs/test-cases.md            # test case inventory (Script ID ↔ spec ↔ report)
-.github/workflows/e2e.yml     # CI pipeline
+.github/workflows/
+├── github-ci.yml             # UI + API tests → reports → Google Chat
+└── performance.yml           # k6
 ```
 
 -------------------------------------
@@ -282,6 +297,7 @@ npx playwright test --project="UI - Cart"  # one domain
 env=local_stag_chrome_false npx playwright test   # headed, visible browser
 npm run env:prod && npx playwright test    # CI-style run on prod (delete .env.ci afterwards)
 npm run lint                               # type check
+npm run perf:smoke                         # k6: 1 user, 30 s per scenario  (perf:load = up to 10 users)
 ```
 
 -------------------------------------
@@ -292,13 +308,21 @@ npm run lint                               # type check
 | --- | --- | --- |
 | Allure (steps, screenshots, video, trace, trend) | `reports/allure-report` | `npm run report:allure` · CI: GitHub Pages |
 | Playwright HTML | `reports/html-report` | `npm run report:html` · CI: build artifact |
-| JSON / JUnit | `reports/json`, `reports/xml` | input for the report history and other CI tools |
+| JSON / JUnit | `reports/json`, `reports/xml` | input for the report channels below and other CI tools |
+| Job summary | GitHub Actions run page | totals, result per project, failed tests with Script ID and error — `npm run report:summary` |
+| Google Chat card | team space | `npm run report:chat` — see below |
 
 Every API call is an Allure step (`POST https://…/auth/login`), and failed UI tests keep their screenshot, video and trace.
 
-### Demo — run notification in Google Chat
+### Run notification in Google Chat
 
-After each run, a bot posts a summary card to the team's Google Chat space: an Allure overview snapshot, run info (time, duration, module, browser, environment), the results with the pass rate, and buttons to open the report and the master sheet.
+After each CI run, once the report is published, `src/core/reporting/google/google-chat-bot.js` posts a card: a screenshot of the
+Allure overview (`npm run report:screenshot`, published with the report), run info (time, duration, module, browser, environment),
+the results with the pass rate, the failed tests by Script ID, and buttons to the report and the report history.
+One webhook per environment (`GG_CHAT_WEBHOOK_<ENV>`, falling back to `GG_CHAT_WEBHOOK`); with no webhook the step is skipped.
+`npm run report:chat -- <reportUrl> --dry-run` prints the card instead of sending it.
+
+Example card from a real project run:
 
 <p align="center">
   <img src="docs/images/google-chat-report.png" alt="Google Chat run report card" width="720">
@@ -323,13 +347,67 @@ The Script ID links a failed row back to the spec tag and to [docs/test-cases.md
 
 ## 11. CI/CD Pipeline
 
-`.github/workflows/e2e.yml` — on push / pull request to `main`, every day at 08:00 (UTC+7), or manually (choose the environment and a tag):
+`.github/workflows/github-ci.yml` — on push / pull request to `main`, every day at 08:00 (UTC+7), or manually (choose the environment and a tag):
 
 1. Install, type check, select the environment (`npm run env:<env>`).
 2. Run all tests (2 workers, 1 retry) — the job keeps going so the report is always published, then fails if any test failed.
-3. Restore the Allure history from the published report → generate the report with its **Trend**.
-4. Publish the Allure report to **GitHub Pages**, upload the Playwright report as an artifact.
-5. Write the run to the report history (Google Sheets).
+3. Restore the Allure history from the published report → generate the report with its **Trend** → screenshot its overview.
+4. Write the **job summary** (results table on the run page) and the run to the report history (Google Sheets).
+5. Publish the Allure report to **GitHub Pages**, upload the Playwright report as an artifact.
+6. Send the **Google Chat** card (after the deploy, so its links and screenshot are live).
+
+```mermaid
+flowchart LR
+    T[Run tests] --> A[Allure report<br/>+ trend + screenshot] --> P[GitHub Pages]
+    T --> J[Job summary]
+    T --> G[Google Sheets history]
+    P --> C[Google Chat card]
+```
+
+`.github/workflows/performance.yml` runs the k6 scenarios every Monday (smoke) or manually (smoke / load) — see section 12.
+
+-------------------------------------
+
+## 12. Performance Testing (k6)
+
+| Scenario | Flow | Endpoint thresholds (p95) |
+| --- | --- | --- |
+| `perf/scenarios/products-api.js` | list products → open one of them → search | `GET /products`, `GET /products/{id}`, `GET /products/search` < 800 ms |
+| `perf/scenarios/auth-flow.js` | log in → call `/auth/me` with the token | `POST /auth/login` < 1.5 s, `GET /auth/me` < 1 s |
+
+| Profile | Load |
+| --- | --- |
+| `smoke` | 1 virtual user, 30 s — the script and the service work |
+| `load` | ramp up to 10 users, hold 1 min, ramp down — normal traffic |
+
+Global thresholds for every scenario: errors < 1 %, checks > 99 %, p95 < 1.5 s. A failed threshold fails the run (exit code 99) and the CI job.
+Each run writes `reports/k6/<scenario>.json` and a Markdown table (shown in the job summary):
+
+```
+k6 products-api (smoke) — PASSED
+  requests 51 · failed 0.00% · checks 100.00%
+  duration avg 271 ms · p(95) 337 ms · max 447 ms
+  ✓ http_req_duration{name:GET /products} p(95)<800
+  ✓ http_req_failed rate<0.01
+```
+
+The target is a public demo API, so the load stays small; point `BASE_URL` at your own environment for real load tests
+(`k6 run -e PROFILE=load -e BASE_URL=https://… perf/scenarios/products-api.js`).
+
+-------------------------------------
+
+## 13. AI-assisted QA (Claude Code skills)
+
+The repo ships [Claude Code](https://claude.com/claude-code) skills that encode the conventions above, so AI-written tests look like hand-written ones
+and are checked the same way. Rules for the assistant are in [CLAUDE.md](CLAUDE.md).
+
+| Skill | Input | What it does |
+| --- | --- | --- |
+| [`/ui-test-from-cases`](.claude/skills/ui-test-from-cases/SKILL.md) | test case table (ID, steps, expected) | normalizes the steps, reuses page-object methods (`scripts/list-steps.mjs`), writes locators from the real DOM, maps every Expected Result to an assertion, runs the tests |
+| [`/api-testing`](.claude/skills/api-testing/SKILL.md) | endpoint / cURL / API docs | adds the typed service method and specs with status + contract + data + negative checks |
+| [`/qa-failure-analyzer`](.claude/skills/qa-failure-analyzer/SKILL.md) | failed run / CI log | lists failures with step and evidence (`scripts/list-failures.mjs`), classifies the root cause, fixes the right layer — a real product bug keeps the test red |
+
+Guardrails shared by all skills: no locators or data in specs, no positional locators, no sleeps to hide a failure, never weaken an assertion to get green, never report a result that was not run.
 
 -------------------------------------
 

@@ -1,0 +1,55 @@
+name: Performance (k6)
+
+on:
+  schedule:
+    - cron: '0 2 * * 1' # every Monday 09:00 (UTC+7) — smoke
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Load profile (smoke = 1 user 30s · load = up to 10 users, 2 min)'
+        type: choice
+        options: [smoke, load]
+        default: smoke
+
+permissions:
+  contents: read
+
+jobs:
+  k6:
+    name: k6 ${{ inputs.profile || 'smoke' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PROFILE: ${{ inputs.profile || 'smoke' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: grafana/setup-k6-action@v1
+
+      - name: Products API
+        id: products
+        continue-on-error: true # run every scenario, fail at the end
+        run: mkdir -p reports/k6 && k6 run --quiet -e PROFILE=$PROFILE perf/scenarios/products-api.js
+
+      - name: Auth flow
+        id: auth
+        continue-on-error: true
+        run: k6 run --quiet -e PROFILE=$PROFILE perf/scenarios/auth-flow.js
+
+      - name: Job summary
+        if: always()
+        run: cat reports/k6/*.md >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Upload k6 results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-${{ env.PROFILE }}-${{ github.run_number }}
+          path: reports/k6
+          retention-days: 14
+
+      - name: Fail the job when a threshold failed
+        if: steps.products.outcome == 'failure' || steps.auth.outcome == 'failure'
+        run: |
+          echo "::error::k6 thresholds failed — see the job summary"
+          exit 1

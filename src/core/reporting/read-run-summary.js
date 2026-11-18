@@ -1,16 +1,31 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import dotenv from 'dotenv'
+
+// ENV_CI / BROWSER_CI of the run (written by `npm run env:<env>`); not there → local defaults
+dotenv.config({ path: '.env.ci' })
 
 /**
  * ==============================
  * Summary of the last run, read from the Playwright JSON reporter (reports/json/results.json)
- * Input of the report history (Google Sheet)
+ * Input of every report channel: report history (Google Sheet), Google Chat card, GitHub job summary
  * ==============================
  */
 const RESULTS_FILE = path.join(process.cwd(), 'reports', 'json', 'results.json')
 
 // Script ID = the tag that looks like ABC-DEF-001 / ABC-001
 const SCRIPT_ID = /^@?[A-Z]{2,6}(-[A-Z]{2,6})?-\d{3}$/
+
+const pad = (n) => String(n).padStart(2, '0')
+
+// 27/10/2026 22:24 — local time of the runner (CI sets TZ)
+export const formatDate = (ts) => {
+  const d = new Date(ts)
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+// 389 → "6m 29s"
+export const formatDuration = (sec) => (sec >= 60 ? `${Math.floor(sec / 60)}m ${sec % 60}s` : `${sec}s`)
 
 function collectTests(suite, out = []) {
   for (const spec of suite.specs ?? []) {
@@ -55,6 +70,8 @@ export function readRunSummary(file = RESULTS_FILE) {
     flaky: count('flaky'),
     passRate: executed ? Number(((passed / executed) * 100).toFixed(1)) : 0,
     durationSec: Math.round(report.stats.duration / 1000),
+    browser: process.env.BROWSER_CI || process.env.BROWSER || 'chrome',
+    tests,
     failedTests: tests.filter((t) => t.status === 'unexpected'),
   }
 }

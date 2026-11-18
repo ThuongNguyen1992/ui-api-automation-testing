@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import { google } from 'googleapis'
-import { readRunSummary } from '../read-run-summary.js'
+import { formatDate, readRunSummary } from '../read-run-summary.js'
 
 /**
  * ==============================
@@ -24,12 +24,6 @@ const TABS = {
 const args = process.argv.slice(2)
 const dryRun = args.includes('--dry-run')
 const reportUrl = args.find((a) => a.startsWith('http')) ?? ''
-
-const formatDate = (ts) => {
-  const d = new Date(ts)
-  const p = (n) => String(n).padStart(2, '0')
-  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`
-}
 
 function credentials() {
   if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) return { credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON) }

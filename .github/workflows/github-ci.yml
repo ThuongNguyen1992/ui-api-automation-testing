@@ -30,6 +30,7 @@ concurrency:
 
 env:
   REPORT_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+  TZ: Asia/Ho_Chi_Minh # dates in the reports = team time
 
 jobs:
   test:
@@ -72,6 +73,13 @@ jobs:
       - name: Generate Allure report
         run: npx allure generate reports/allure-results -o reports/allure-report --clean
 
+      # published with the report → image of the Google Chat card
+      - name: Screenshot the report overview
+        run: npm run report:screenshot
+
+      - name: Job summary (results table on the run page)
+        run: npm run report:summary -- "$REPORT_URL"
+
       - name: Upload Playwright artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -112,3 +120,38 @@ jobs:
     steps:
       - id: deploy
         uses: actions/deploy-pages@v4
+
+  # after the deploy, so the card links (report, screenshot) are already live
+  notify:
+    name: Notify Google Chat
+    needs: deploy-report
+    if: always() && needs.deploy-report.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download run results
+        uses: actions/download-artifact@v4
+        with:
+          name: playwright-report-${{ github.run_number }}
+          path: reports
+
+      - name: Select environment
+        run: npm run env:${{ inputs.env || 'stag' }}
+
+      - name: Send the run card
+        env:
+          GG_CHAT_WEBHOOK: ${{ secrets.GG_CHAT_WEBHOOK }}
+          GG_CHAT_WEBHOOK_DEV: ${{ secrets.GG_CHAT_WEBHOOK_DEV }}
+          GG_CHAT_WEBHOOK_STAG: ${{ secrets.GG_CHAT_WEBHOOK_STAG }}
+          GG_CHAT_WEBHOOK_PROD: ${{ secrets.GG_CHAT_WEBHOOK_PROD }}
+          GG_REPORT_SPREADSHEET_ID: ${{ secrets.GG_REPORT_SPREADSHEET_ID }}
+        run: npm run report:chat -- "$REPORT_URL"

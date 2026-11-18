@@ -17,7 +17,12 @@
     "lint": "tsc --noEmit",
     "report:allure": "allure open reports/allure-report",
     "report:html": "playwright show-report reports/html-report",
-    "report:history": "node src/core/reporting/google/report-history.js"
+    "report:history": "node src/core/reporting/google/report-history.js",
+    "report:chat": "node src/core/reporting/google/google-chat-bot.js",
+    "report:summary": "node src/core/reporting/github/job-summary.js",
+    "report:screenshot": "node src/core/reporting/capture-report-screenshot.js",
+    "perf:smoke": "mkdir -p reports/k6 && k6 run -e PROFILE=smoke perf/scenarios/products-api.js && k6 run -e PROFILE=smoke perf/scenarios/auth-flow.js",
+    "perf:load": "mkdir -p reports/k6 && k6 run -e PROFILE=load perf/scenarios/products-api.js && k6 run -e PROFILE=load perf/scenarios/auth-flow.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",

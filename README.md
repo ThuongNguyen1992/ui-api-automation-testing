@@ -75,7 +75,7 @@ The report host is one step: this repo publishes to GitHub Pages; on company pro
 | AI assistant | Claude Code — project skills in `.claude/skills` |
 | CI | GitHub Actions → Allure on GitHub Pages |
 | Code quality | TypeScript type check, Husky git hooks, Prettier (VS Code) |
-| Requirements | Node.js ≥ 20, Java 11+ (only to build the Allure report locally), k6 (only for performance tests) |
+| Requirements | Node.js ≥ 20, Java 11+ (only to build the Allure report locally), k6 (only for performance tests) — all installed by `scripts/setup-macos.sh` / `setup-windows.ps1` |
 
 -------------------------------------
 
@@ -86,10 +86,18 @@ The report host is one step: this repo publishes to GitHub Pages; on company pro
 ```bash
 git clone https://github.com/ThuongNguyen1992/ui-api-automation-testing.git
 cd ui-api-automation-testing
-npm ci                              # also installs the Husky git hooks (prepare script)
-npx playwright install chromium
-brew install k6                     # optional — only for performance tests
 ```
+
+Then **one command** installs everything — Node.js ≥ 20, Java (Allure), k6, the npm packages + Husky git hooks, the Playwright browser — and runs the type check.
+Tools already installed are kept.
+
+| OS | Command | Installs tools with |
+| --- | --- | --- |
+| **macOS** | `bash scripts/setup-macos.sh` | [Homebrew](https://brew.sh) |
+| **Windows** | `powershell -ExecutionPolicy Bypass -File scripts\setup-windows.ps1` | winget (built into Windows 10 / 11) |
+
+Skip the optional tools with `--skip-java` / `--skip-k6` (macOS) or `-SkipJava` / `-SkipK6` (Windows).
+Node.js, Java and k6 already installed? `npm run setup` does only the project part (`npm ci` + Playwright browser).
 
 Open the folder in VS Code and accept the recommended extensions (Playwright, Prettier, Claude Code) — `.vscode/settings.json` sets the formatter.
 
@@ -120,6 +128,13 @@ npm run k6:smoke
 # Open the reports
 allure open                              # Allure
 npm run report:html                                 # Playwright HTML
+```
+
+On **Windows (PowerShell)** set the dynamic config and remove `.env.ci` like this — every `npm run` script works the same on both systems:
+
+```powershell
+$env:env = "local_stag_chrome_false"; npx playwright test --grep @smoke; Remove-Item Env:env
+npm run env:prod; npm test; Remove-Item .env.ci
 ```
 
 -------------------------------------
@@ -177,6 +192,7 @@ CLAUDE.md                     # project rules for Claude Code
 .husky/                       # git hooks: pre-commit · pre-push
 .vscode/                      # editor settings + recommended extensions
 .env.example                  # optional integrations (Google Chat, Google Sheets)
+scripts/                      # one-command setup: setup-macos.sh · setup-windows.ps1
 ```
 
 -------------------------------------
@@ -351,6 +367,7 @@ The run settings are resolved in this order — first match wins:
 
 | Group | Script | What it runs |
 | --- | --- | --- |
+| **Setup** | `npm run setup` | npm packages + Husky hooks + Playwright browser (tools: `scripts/setup-*`) |
 | **Quality** | `npm run lint` | TypeScript type check (also run by the Husky hooks) |
 | **All** | `npm test` | every UI + API test |
 | | `npm run test:ui` / `test:api` | UI projects / API projects only |

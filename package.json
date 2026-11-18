@@ -6,6 +6,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "setup": "npm ci && npx playwright install chromium",
     "lint": "tsc --noEmit",
     "test": "playwright test",
     "test:ui": "playwright test --project=\"UI - Auth\" --project=\"UI - Inventory\" --project=\"UI - Cart\" --project=\"UI - Checkout\"",
@@ -22,7 +23,7 @@
     "test:inventory": "playwright test --grep @inventory",
     "test:cart": "playwright test --grep @cart",
     "test:checkout": "playwright test --grep @checkout",
-    "test:headed": "env=local_stag_chrome_false playwright test",
+    "test:headed": "playwright test --headed",
     "test:ui-mode": "playwright test --ui",
     "test:debug": "playwright test --debug",
     "pw:codegen": "playwright codegen https://www.saucedemo.com",
@@ -39,8 +40,8 @@
     "report:gg-history": "node src/core/reporting/google/report-history.js",
     "k6:smoke": "npm run k6:products -- -e PROFILE=smoke && npm run k6:auth -- -e PROFILE=smoke",
     "k6:load": "npm run k6:products -- -e PROFILE=load && npm run k6:auth -- -e PROFILE=load",
-    "k6:products": "mkdir -p reports/k6 && k6 run k6/scenarios/products-api.js",
-    "k6:auth": "mkdir -p reports/k6 && k6 run k6/scenarios/auth-flow.js",
+    "k6:products": "node -e \"require('fs').mkdirSync('reports/k6',{recursive:true})\" && k6 run k6/scenarios/products-api.js",
+    "k6:auth": "node -e \"require('fs').mkdirSync('reports/k6',{recursive:true})\" && k6 run k6/scenarios/auth-flow.js",
     "prepare": "husky"
   },
   "devDependencies": {

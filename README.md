@@ -23,6 +23,22 @@ It runs against two public demo systems — [Swag Labs](https://www.saucedemo.co
 > systems because client code cannot be published. The structure (domains, projects, data, report channels) is meant to be
 > adapted to each product and team; the conventions — layers, locator rules, Script ID traceability, assertions that really fail — stay the same.
 
+### Pipeline
+
+```mermaid
+flowchart LR
+    A([Push / PR<br/>Daily 08:00<br/>Manual]) --> B[Type check]
+    B --> C[Run UI + API tests<br/>Playwright · 37 cases]
+    C --> D[Allure report<br/>+ trend history]
+    D --> E[Deploy<br/>GitHub Pages]
+    E --> F[Google Chat card<br/>screenshot + results]
+    C --> G[Job summary<br/>on the run page]
+    C --> H[Google Sheets<br/>run history]
+    K([Weekly / Manual]) --> L[k6 smoke / load] --> M[Thresholds<br/>+ job summary]
+```
+
+The report host is one step: this repo publishes to GitHub Pages; on company projects the same step deploys to Netlify (one URL per run). Details in [CI/CD Pipeline](#11-cicd-pipeline).
+
 📊 **Live report:** https://thuongnguyen1992.github.io/ui-api-automation-testing/ · 🗂 **Report history:** [Google Sheet](https://docs.google.com/spreadsheets/d/1rW8dShKksqNqkV5hkODPHexFWYgZ0Xaopb4f32fviTM/edit?gid=732867072#gid=732867072) · 📋 **Test cases:** [docs/test-cases.md](docs/test-cases.md) (37 cases: 24 UI, 13 API)
 
 -------------------------------------
@@ -417,14 +433,6 @@ The Script ID links a failed row back to the spec tag and to [docs/test-cases.md
 4. Write the **job summary** (results table on the run page) and the run to the report history (Google Sheets).
 5. Publish the Allure report to **GitHub Pages**, upload the Playwright report as an artifact.
 6. Send the **Google Chat** card (after the deploy, so its links and screenshot are live).
-
-```mermaid
-flowchart LR
-    T[Run tests] --> A[Allure report<br/>+ trend + screenshot] --> P[GitHub Pages]
-    T --> J[Job summary]
-    T --> G[Google Sheets history]
-    P --> C[Google Chat card]
-```
 
 `.github/workflows/performance.yml` runs the k6 scenarios every Monday (smoke) or manually (smoke / load) — see section 12.
 

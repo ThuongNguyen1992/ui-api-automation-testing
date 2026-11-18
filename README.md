@@ -329,18 +329,34 @@ The run settings are resolved in this order — first match wins:
 
 ## 8. Running Tests
 
-```bash
-npm test                                   # everything
-npm run test:ui                            # UI projects only
-npm run test:api                           # API projects only
-npm run test:smoke                         # @smoke only
-npx playwright test --grep @CHK-001        # one test case by Script ID
-npx playwright test --project="UI - Cart"  # one domain
-env=local_stag_chrome_false npx playwright test   # headed, visible browser
-npm run env:prod && npx playwright test    # CI-style run on prod (delete .env.ci afterwards)
-npm run lint                               # type check
-npm run k6:smoke                         # k6: 1 user, 30 s per scenario  (k6:load = up to 10 users)
-```
+| Group | Script | What it runs |
+| --- | --- | --- |
+| **Quality** | `npm run lint` | TypeScript type check (also run by the Husky hooks) |
+| **All** | `npm test` | every UI + API test |
+| | `npm run test:ui` / `test:api` | UI projects / API projects only |
+| | `npm run test:tag <@tag>` | any tag, e.g. `npm run test:tag @CHK-001` (one test case by Script ID) |
+| **By level** | `npm run test:smoke` | `@smoke` — critical path, UI + API |
+| | `npm run test:smoke-ui` / `test:smoke-api` | `@smoke` UI only / API only |
+| | `npm run test:regression` | `@regression` — the full regression suite |
+| | `npm run test:e2e` | `@e2e` — end-to-end purchase flows |
+| | `npm run test:smoke:ci` / `test:e2e:ci` | same with 1 worker and 1 retry (CI-style) |
+| **By module** | `npm run test:auth` · `test:inventory` · `test:cart` · `test:checkout` | one business module |
+| **Debug** | `npm run test:headed` | visible browser |
+| | `npm run test:ui-mode` | Playwright UI mode (watch, time-travel) |
+| | `npm run test:debug` | Playwright Inspector, step by step |
+| | `npm run pw:codegen` | record locators / steps on Swag Labs |
+| | `npm run pw:trace <trace.zip>` | open a trace of a failed test |
+| **Environment** | `npm run env:dev` · `env:stag` · `env:prod` | write `.env.ci` → CI runner, headless (delete it afterwards) |
+| **Reports** | `npm run report:allure` / `report:allure:generate` | open / build the Allure report |
+| | `npm run report:html` | open the Playwright HTML report |
+| | `npm run report:summary` | last run as a Markdown table (CI job summary) |
+| | `npm run report:screenshot` | screenshot of the Allure overview (`overview.png`) |
+| | `npm run report:gg-chat -- <reportUrl>` | send the Google Chat card (`--dry-run` to print it) |
+| | `npm run report:gg-history -- <reportUrl>` | add the run to the Google Sheets history (`--dry-run` to print it) |
+| **Performance** | `npm run k6:smoke` / `k6:load` | every k6 scenario, 1 user 30 s / up to 10 users |
+| | `npm run k6:products` · `k6:auth` | one scenario — extra k6 flags after `--`, e.g. `-- -e PROFILE=load` |
+
+Combine any of them with a dynamic environment: `env=local_prod_chrome_false npm run test:cart`.
 
 -------------------------------------
 
@@ -352,7 +368,7 @@ npm run k6:smoke                         # k6: 1 user, 30 s per scenario  (k6:lo
 | Playwright HTML | `reports/html-report` | `npm run report:html` · CI: build artifact |
 | JSON / JUnit | `reports/json`, `reports/xml` | input for the report channels below and other CI tools |
 | Job summary | GitHub Actions run page | totals, result per project, failed tests with Script ID and error — `npm run report:summary` |
-| Google Chat card | team space | `npm run report:chat` — see below |
+| Google Chat card | team space | `npm run report:gg-chat` — see below |
 
 Every API call is an Allure step (`POST https://…/auth/login`), and failed UI tests keep their screenshot, video and trace.
 
@@ -362,7 +378,7 @@ After each CI run, once the report is published, `src/core/reporting/google/goog
 Allure overview (`npm run report:screenshot`, published with the report), run info (time, duration, module, browser, environment),
 the results with the pass rate, the failed tests by Script ID, and buttons to the report and the report history.
 One webhook per environment (`GG_CHAT_WEBHOOK_<ENV>`, falling back to `GG_CHAT_WEBHOOK`); with no webhook the step is skipped.
-`npm run report:chat -- <reportUrl> --dry-run` prints the card instead of sending it.
+`npm run report:gg-chat -- <reportUrl> --dry-run` prints the card instead of sending it.
 
 Example card from a real project run:
 
@@ -376,7 +392,7 @@ Example card from a real project run:
 
 🗂 **Report history:** https://docs.google.com/spreadsheets/d/1rW8dShKksqNqkV5hkODPHexFWYgZ0Xaopb4f32fviTM/edit?gid=732867072#gid=732867072
 
-Every run is logged by `npm run report:history` (`src/core/reporting/google/report-history.js`), from `reports/json/results.json`:
+Every run is logged by `npm run report:gg-history` (`src/core/reporting/google/report-history.js`), from `reports/json/results.json`:
 
 | Tab | One row per | Columns |
 | --- | --- | --- |

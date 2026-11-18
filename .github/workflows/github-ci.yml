@@ -101,7 +101,7 @@ jobs:
         env:
           GG_REPORT_SPREADSHEET_ID: ${{ secrets.GG_REPORT_SPREADSHEET_ID }}
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
-        run: npm run report:history -- "$REPORT_URL"
+        run: npm run report:gg-history -- "$REPORT_URL"
 
       - name: Fail the job when tests failed
         if: steps.tests.outcome == 'failure'
@@ -154,4 +154,4 @@ jobs:
           GG_CHAT_WEBHOOK_STAG: ${{ secrets.GG_CHAT_WEBHOOK_STAG }}
           GG_CHAT_WEBHOOK_PROD: ${{ secrets.GG_CHAT_WEBHOOK_PROD }}
           GG_REPORT_SPREADSHEET_ID: ${{ secrets.GG_REPORT_SPREADSHEET_ID }}
-        run: npm run report:chat -- "$REPORT_URL"
+        run: npm run report:gg-chat -- "$REPORT_URL"

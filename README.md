@@ -296,6 +296,14 @@ npm run lint                               # type check
 
 Every API call is an Allure step (`POST https://…/auth/login`), and failed UI tests keep their screenshot, video and trace.
 
+### Demo — run notification in Google Chat
+
+After each run, a bot posts a summary card to the team's Google Chat space: an Allure overview snapshot, run info (time, duration, module, browser, environment), the results with the pass rate, and buttons to open the report and the master sheet.
+
+<p align="center">
+  <img src="docs/images/google-chat-report.png" alt="Google Chat run report card" width="720">
+</p>
+
 -------------------------------------
 
 ## 10. Report History (Google Sheets)

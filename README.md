@@ -19,6 +19,10 @@ It runs against two public demo systems — [Swag Labs](https://www.saucedemo.co
 - **AI-assisted QA** — Claude Code skills that turn test cases into automation, write API tests and analyze failures, following the same conventions.
 - **CI** — GitHub Actions on every push / PR and daily schedule.
 
+> **About this project** — a showcase of the framework I build and run on real projects, rewritten against public demo
+> systems because client code cannot be published. The structure (domains, projects, data, report channels) is meant to be
+> adapted to each product and team; the conventions — layers, locator rules, Script ID traceability, assertions that really fail — stay the same.
+
 📊 **Live report:** https://thuongnguyen1992.github.io/ui-api-automation-testing/ · 🗂 **Report history:** [Google Sheet](https://docs.google.com/spreadsheets/d/1rW8dShKksqNqkV5hkODPHexFWYgZ0Xaopb4f32fviTM/edit?gid=732867072#gid=732867072) · 📋 **Test cases:** [docs/test-cases.md](docs/test-cases.md) (37 cases: 24 UI, 13 API)
 
 -------------------------------------

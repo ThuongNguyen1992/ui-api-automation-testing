@@ -98,7 +98,7 @@ npm run env:prod && npm test; rm .env.ci
 npm run k6:smoke
 
 # Open the reports
-npm run report:allure                               # Allure
+allure open                              # Allure
 npm run report:html                                 # Playwright HTML
 ```
 

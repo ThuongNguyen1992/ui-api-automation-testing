@@ -1,7 +1,7 @@
 /**
  * ==============================
  * k6 config shared by every scenario — target, load profile, pass/fail thresholds
- *   k6 run -e PROFILE=smoke|load [-e BASE_URL=…] perf/scenarios/<name>.js
+ *   k6 run -e PROFILE=smoke|load [-e BASE_URL=…] k6/scenarios/<name>.js
  *
  * The target is a public demo API: keep the load small (load profile = 10 virtual users at most).
  * ==============================

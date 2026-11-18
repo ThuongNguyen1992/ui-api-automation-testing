@@ -29,12 +29,12 @@ jobs:
       - name: Products API
         id: products
         continue-on-error: true # run every scenario, fail at the end
-        run: mkdir -p reports/k6 && k6 run --quiet -e PROFILE=$PROFILE perf/scenarios/products-api.js
+        run: mkdir -p reports/k6 && k6 run --quiet -e PROFILE=$PROFILE k6/scenarios/products-api.js
 
       - name: Auth flow
         id: auth
         continue-on-error: true
-        run: k6 run --quiet -e PROFILE=$PROFILE perf/scenarios/auth-flow.js
+        run: k6 run --quiet -e PROFILE=$PROFILE k6/scenarios/auth-flow.js
 
       - name: Job summary
         if: always()

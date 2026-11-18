@@ -9,7 +9,7 @@ npm run lint                                         # tsc --noEmit
 env=local_stag_chrome_true npx playwright test       # all tests, headless
 npx playwright test --grep @CART-001                 # one test by Script ID
 npm run test:api                                     # API projects only
-npm run perf:smoke                                   # k6 smoke (needs k6 installed)
+npm run k6:smoke                                     # k6 smoke (needs k6 installed)
 npm run report:summary                               # last run as a Markdown table
 ```
 

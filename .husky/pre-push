@@ -1,0 +1,8 @@
+echo "🔹 Running lint before push..."
+
+if ! npm run lint; then
+  echo "❌ Lint failed! Push aborted."
+  exit 1
+fi
+
+echo "✅ Lint passed! You can push your changes."

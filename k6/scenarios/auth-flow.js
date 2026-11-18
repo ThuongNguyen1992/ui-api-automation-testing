@@ -6,7 +6,7 @@ import { buildSummary } from '../lib/summary.js'
 /**
  * ==============================
  * Login → call an authenticated endpoint with the token
- *   k6 run -e PROFILE=smoke perf/scenarios/auth-flow.js
+ *   k6 run -e PROFILE=smoke k6/scenarios/auth-flow.js
  * ==============================
  */
 export const options = buildOptions({

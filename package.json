@@ -6,6 +6,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "prepare": "husky",
     "test": "playwright test",
     "test:ui": "playwright test --project=\"UI - Auth\" --project=\"UI - Inventory\" --project=\"UI - Cart\" --project=\"UI - Checkout\"",
     "test:api": "playwright test --project=\"API - Auth\" --project=\"API - Products\" --project=\"API - Carts\"",
@@ -21,8 +22,8 @@
     "report:chat": "node src/core/reporting/google/google-chat-bot.js",
     "report:summary": "node src/core/reporting/github/job-summary.js",
     "report:screenshot": "node src/core/reporting/capture-report-screenshot.js",
-    "perf:smoke": "mkdir -p reports/k6 && k6 run -e PROFILE=smoke perf/scenarios/products-api.js && k6 run -e PROFILE=smoke perf/scenarios/auth-flow.js",
-    "perf:load": "mkdir -p reports/k6 && k6 run -e PROFILE=load perf/scenarios/products-api.js && k6 run -e PROFILE=load perf/scenarios/auth-flow.js"
+    "k6:smoke": "mkdir -p reports/k6 && k6 run -e PROFILE=smoke k6/scenarios/products-api.js && k6 run -e PROFILE=smoke k6/scenarios/auth-flow.js",
+    "k6:load": "mkdir -p reports/k6 && k6 run -e PROFILE=load k6/scenarios/products-api.js && k6 run -e PROFILE=load k6/scenarios/auth-flow.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
@@ -32,6 +33,7 @@
     "dotenv": "^16.4.5",
     "execa": "^9.5.1",
     "googleapis": "^144.0.0",
+    "husky": "^9.1.7",
     "typescript": "^5.7.2"
   },
   "engines": {

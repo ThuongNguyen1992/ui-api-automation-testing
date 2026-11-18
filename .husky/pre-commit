@@ -1,0 +1,30 @@
+# Pre-commit: block the commit when the branch is behind its remote, then type check
+
+set -e
+
+echo "🔍 Running pre-commit checks..."
+
+BRANCH=$(git symbolic-ref --short HEAD)
+
+# skip the remote check when the branch is not on the remote yet
+if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+  git fetch origin "$BRANCH"
+
+  BEHIND=$(git rev-list --count "$BRANCH..origin/$BRANCH")
+  AHEAD=$(git rev-list --count "origin/$BRANCH..$BRANCH")
+
+  if [ "$BEHIND" -gt 0 ]; then
+    echo "❌ Your branch '$BRANCH' is $BEHIND commit(s) behind origin/$BRANCH (ahead $AHEAD). Please git pull --rebase first!"
+    exit 1
+  fi
+  echo "✅ Your branch '$BRANCH' is up-to-date with remote (ahead $AHEAD)."
+else
+  echo "ℹ️ Branch '$BRANCH' does not exist on remote yet. Skip remote check."
+fi
+
+if ! npm run lint; then
+  echo "❌ Lint failed. Please fix the errors before commit."
+  exit 1
+fi
+
+echo "✅ Pre-commit checks passed."

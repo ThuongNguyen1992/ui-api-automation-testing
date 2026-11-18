@@ -1,8 +1,9 @@
 # dependencies
 node_modules/
 
-# reports & artifacts (generated on every run)
-reports/
+# reports & artifacts (generated on every run) — only reports/README.md is versioned
+reports/*
+!reports/README.md
 test-results/
 playwright-report/
 allure-results/
@@ -19,3 +20,4 @@ allure-report/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json

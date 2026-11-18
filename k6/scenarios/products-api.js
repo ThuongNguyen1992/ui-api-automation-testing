@@ -6,7 +6,7 @@ import { buildSummary } from '../lib/summary.js'
 /**
  * ==============================
  * Catalog browsing — a visitor lists products, opens one, searches
- *   k6 run -e PROFILE=smoke perf/scenarios/products-api.js
+ *   k6 run -e PROFILE=smoke k6/scenarios/products-api.js
  * ==============================
  */
 export const options = buildOptions({
